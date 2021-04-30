@@ -24,13 +24,10 @@ spec:
         - name: cutter-dev-sql-proxy-sa
           secret:
             secretName: cutter-dev-sql-proxy-sa
-      terminationGracePeriodSeconds: 60  
+      terminationGracePeriodSeconds: 60
       containers:
       - name: cutter-status-dashboard
         image: "gcr.io/$PROJECT_ID/cutter-status-dashboard:$TAG"
-        args:
-            - --cooldown=1800
-            - --log=error-log-sink-$ENV
         imagePullPolicy: Always
         volumeMounts:
           - name: service-account
@@ -57,7 +54,7 @@ spec:
             port: http
           initialDelaySeconds: 15
           periodSeconds: 10
-        env: 
+        env:
           - name: GOOGLE_PROJECT
             value: $PROJECT_ID
           - name: GOOGLE_APPLICATION_CREDENTIALS
@@ -76,11 +73,26 @@ spec:
               secretKeyRef:
                 name: cutter-status-dashboard-secrets
                 key: USERNAME
-          - name: DB_NAME 
+
+          - name: PLATFORM_DB_HOST
+            value: localhost
+          - name: PLATFORM_DB_PORT
+            value: "5433"
+          - name: PLATFORM_DB_NAME
+            value: cutter_platform
+          - name: PLATFORM_DB_USERNAME
+            value: cutteradmin
+          - name: PLATFORM_DB_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                key: DB_PASSWORD
+                name: cutter-dev-platform-api-secrets
+
+          - name: DB_NAME
             value: dashboard_db
           - name: DB_PORT
             value: "5432"
-          - name: MIGRATE_LEVEL 
+          - name: MIGRATE_LEVEL
             value: "up"
           - name: MIGRATIONS_FOLDER
             value: /app/migrations
@@ -94,6 +106,7 @@ spec:
             value: "https://cutter-dev-study-service-service"
           - name: CLUSTER_NAME
             value: "cutter-dev-gke-cluster"
+
       - name: cloudsql-proxy
         image: gcr.io/cloudsql-docker/gce-proxy:1.14
         resources:
@@ -108,7 +121,6 @@ spec:
           - /cloud_sql_proxy
           - -instances=cutter-214115:us-central1:cutter-status-dashboard-dev=tcp:5432
           - -credential_file=/secrets/cloudsql/credentials.json
-          - ./cloudbuild/migrations
         securityContext:
           runAsUser: 2 # non-root user
           allowPrivilegeEscalation: false
@@ -116,6 +128,24 @@ spec:
           - name: cutter-dev-sql-proxy-sa
             mountPath: /secrets/cloudsql
             readOnly: true
+
+      - name: platform-db
+        image: gcr.io/cloudsql-docker/gce-proxy:1.14
+        resources:
+          requests:
+            cpu: 100m
+        command:
+          - /cloud_sql_proxy
+          - -instances=cutter-214115:us-central1:cutter-dev-postgres-instance-ea0e=tcp:5433
+          - -credential_file=/secrets/cloudsql/credentials.json
+        securityContext:
+          runAsUser: 2 # non-root user
+          allowPrivilegeEscalation: false
+        volumeMounts:
+          - name: cutter-dev-sql-proxy-sa
+            mountPath: /secrets/cloudsql
+            readOnly: true
+
 --- 
 apiVersion: v1
 kind: Service

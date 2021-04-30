@@ -6,6 +6,7 @@ import (
 
 	"contrib.go.opencensus.io/exporter/stackdriver/propagation"
 	"github.com/IdeaEvolver/cutter-pkg/service"
+	"github.com/IdeaEvolver/cutter-status-dashboard/database"
 	"github.com/IdeaEvolver/cutter-status-dashboard/healthchecks"
 	"github.com/IdeaEvolver/cutter-status-dashboard/metrics"
 	"github.com/IdeaEvolver/cutter-status-dashboard/status"
@@ -21,9 +22,10 @@ type StatusStore interface {
 }
 
 type Handler struct {
-	Statuses     StatusStore
-	Healthchecks *healthchecks.Client
-	Metrics      *metrics.Metrics
+	Statuses       StatusStore
+	Healthchecks   *healthchecks.Client
+	Metrics        *metrics.Metrics
+	DatabaseHealth *database.Health
 }
 
 func New(cfg *service.Config, handler *Handler) *service.Server {
