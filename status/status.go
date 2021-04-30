@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 
+	"github.com/IdeaEvolver/cutter-pkg/clog"
 	"github.com/IdeaEvolver/cutter-pkg/cuterr"
 )
 
@@ -28,6 +29,7 @@ func New(db *sql.DB) *StatusStore {
 }
 
 func (s *StatusStore) UpdateStatus(ctx context.Context, service, status string) error {
+	clog.Infof("updating status %s -> %s", service, status)
 	var query = `UPDATE statuses SET status = $2 WHERE service = $1`
 
 	_, err := s.db.ExecContext(ctx, query, service, status)
