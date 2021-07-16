@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 
+	"cloud.google.com/go/storage"
 	"contrib.go.opencensus.io/exporter/stackdriver/propagation"
 	"github.com/IdeaEvolver/cutter-pkg/service"
 	"github.com/IdeaEvolver/cutter-status-dashboard/healthchecks"
@@ -24,6 +25,7 @@ type Handler struct {
 	Statuses     StatusStore
 	Healthchecks *healthchecks.Client
 	Metrics      *metrics.Metrics
+	Storage      *storage.Client
 }
 
 func New(cfg *service.Config, handler *Handler) *service.Server {

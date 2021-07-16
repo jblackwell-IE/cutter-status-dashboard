@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"time"
 
+	"cloud.google.com/go/storage"
 	"contrib.go.opencensus.io/exporter/stackdriver/propagation"
 	"github.com/IdeaEvolver/cutter-pkg/client"
 	"github.com/IdeaEvolver/cutter-pkg/clog"
@@ -37,6 +38,7 @@ type Config struct {
 
 	GoogleProject string `envconfig:"GOOGLE_PROJECT" required:"true"`
 	ClusterName   string `envconfig:"CLUSTER_NAME" required:"true"`
+	BucketName    string `envconfig:"BUCKET_NAME" required:"true"`
 
 	PORT string `envconfig:"PORT"`
 }
@@ -104,15 +106,21 @@ func main() {
 		clog.Fatalf("unable to create metrics client: %v", err)
 	}
 
+	ctx := context.Background()
+	storageClient, err := storage.NewClient(ctx)
+	if err != nil {
+		clog.Fatalf("unable to create storage client: %v", err)
+	}
+
 	handler := &server.Handler{
 		Healthchecks: healthchecksClient,
 		Statuses:     statusStore,
 		Metrics:      metricsClient,
+		Storage:      storageClient,
 	}
 	s := server.New(scfg, handler)
 
-	ctx := context.Background()
-	go handler.AllChecks(ctx)
+	go handler.AllChecks(ctx, cfg.BucketName, cfg.ClusterName)
 
 	clog.Infof("listening on %s", s.Addr)
 	fmt.Println(s.ListenAndServe())
