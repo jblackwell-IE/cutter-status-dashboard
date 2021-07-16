@@ -120,7 +120,7 @@ func main() {
 	}
 	s := server.New(scfg, handler)
 
-	go handler.AllChecks(ctx, cfg.BucketName, cfg.ClusterName)
+	go handler.AllChecks(ctx, cfg.BucketName)
 
 	clog.Infof("listening on %s", s.Addr)
 	fmt.Println(s.ListenAndServe())

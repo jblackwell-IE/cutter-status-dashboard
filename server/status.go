@@ -28,7 +28,7 @@ func (h *Handler) GetAllStatuses(w http.ResponseWriter, r *http.Request) (interf
 	return h.Statuses.GetAllStatuses(r.Context())
 }
 
-func (h *Handler) AllChecks(ctx context.Context, bucket, object string) error {
+func (h *Handler) AllChecks(ctx context.Context, bucket string) error {
 	statuses := []StatusLog{}
 	for {
 
@@ -91,9 +91,10 @@ func (h *Handler) AllChecks(ctx context.Context, bucket, object string) error {
 			clog.Fatalf("Error updating infra status", err)
 		}
 
+		filename := time.Now().String()
 		for _, status := range statuses {
-			if err := h.write(ctx, status, bucket, object); err != nil {
-				clog.Errorf("unable to write data to bucket %s, object %s:  %v", bucket, object, err)
+			if err := h.write(ctx, status, bucket, filename); err != nil {
+				clog.Errorf("unable to write data to bucket %s, object %s:  %v", bucket, filename, err)
 				return err
 			}
 		}
