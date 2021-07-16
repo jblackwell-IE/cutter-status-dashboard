@@ -24,6 +24,7 @@ services:
     volumes:
       - ~/.ssh:/root/.ssh
       - ./:/app
+      - ~/keys:/keys
     environment:
       PORT: 8080
       DB_HOSTNAME: "dashboard-psql"
@@ -34,6 +35,9 @@ services:
       MIGRATE_LEVEL: "up"
       MIGRATIONS_FOLDER: "/app/migrations"
       PLATFORM_ENDPOINT: 0.0.0.0:8081
+      GOOGLE_PROJECT: "cutter-214115"
+      CLUSTER_NAME: "cutter-dev-gke-cluster"
+      GOOGLE_APPLICATION_CREDENTIALS: /keys/cutter-214115-5bfe7b99a41d.json
   dashboard-psql:
     image: postgres
     ports:
