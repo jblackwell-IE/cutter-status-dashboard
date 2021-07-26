@@ -1,10 +1,12 @@
 package healthchecks
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 
 	"github.com/IdeaEvolver/cutter-pkg/client"
 )
@@ -26,16 +28,6 @@ type HttpClient interface {
 	Do(*http.Request) (*http.Response, error)
 }
 
-// func New(c HttpClient, platform, fulfillment, crm, study string) *Client {
-// 	return &Client{
-// 		Client:      client.New(c),
-// 		Platform:    platform,
-// 		Fulfillment: fulfillment,
-// 		Crm:         crm,
-// 		Study:       study,
-// 	}
-// }
-
 func (c *Client) do(ctx context.Context, req *client.Request, ret interface{}) error {
 	res, err := c.Client.Do(req)
 	if err != nil {
@@ -50,10 +42,16 @@ func (c *Client) do(ctx context.Context, req *client.Request, ret interface{}) e
 	return nil
 }
 
+func (c *Client) doExternal(ctx context.Context, req *http.Request) string {
+	internalClient := &http.Client{}
+
+	resp, _ := internalClient.Do(req)
+
+	return resp.Status
+}
+
 func (c *Client) PlatformStatus(ctx context.Context) (*ServiceResponse, error) {
-	fmt.Println("platform ", c.Platform)
 	url := fmt.Sprintf("%s/healthcheck", c.Platform)
-	fmt.Println("URL ", url)
 	req, _ := client.NewRequestWithContext(ctx, "GET", url, nil)
 
 	status := &ServiceResponse{}
@@ -120,6 +118,82 @@ func (c *Client) StudyUIStatus(ctx context.Context) (*ServiceResponse, error) {
 	if err := c.do(ctx, req, &status); err != nil {
 		return nil, err
 	}
+
+	return status, nil
+}
+
+type hibbertResponse struct {
+	Token string `json:"token"`
+}
+
+func (c *Client) HibbertStatus(ctx context.Context) (*ServiceResponse, error) {
+	//url := c.HibbertEndpoint
+	url := "https://inventoryservices.qa.order2u.com/restServices/getUserToke"
+	body := struct {
+		AppId    string `json:"appId"`
+		Username string `json:"username"`
+		Password string `json:"password"`
+	}{
+		AppId:    "3142",
+		Username: "AZCutterAPI",
+		Password: "@admin@ZCutter@PI",
+	}
+
+	b, _ := json.Marshal(body)
+	//req, _ := client.NewRequestWithContext(ctx, "POST", url, bytes.NewReader(b))
+	req, _ := http.NewRequestWithContext(ctx, "POST", url, bytes.NewReader(b))
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Accept", "application/json")
+
+	httpStatus := c.doExternal(ctx, req)
+
+	status := &ServiceResponse{Status: httpStatus}
+
+	return status, nil
+}
+
+// func (c *Client) StripeStatus(ctx context.Context) (*ServiceResponse, error) {
+// 	//url := c.HibbertEndpoint
+// 	url := "https://inventoryservices.qa.order2u.com/restServices/getUserToke"
+// 	body := struct {
+// 		AppId    string `json:"appId"`
+// 		Username string `json:"username"`
+// 		Password string `json:"password"`
+// 	}{
+// 		AppId:    "3142",
+// 		Username: "AZCutterAPI",
+// 		Password: "@admin@ZCutter@PI",
+// 	}
+
+// 	b, _ := json.Marshal(body)
+// 	//req, _ := client.NewRequestWithContext(ctx, "POST", url, bytes.NewReader(b))
+// 	req, _ := http.NewRequest("POST", url, bytes.NewReader(b))
+// 	req.Header.Add("Content-Type", "application/json")
+// 	req.Header.Add("Accept", "application/json")
+
+// 	httpStatus := c.doExternal(ctx, req)
+
+// 	status := &ServiceResponse{Status: httpStatus}
+
+// 	return status, nil
+// }
+
+func (c *Client) AZCRMStatus(ctx context.Context) (*ServiceResponse, error) {
+	q := url.Values{}
+	q.Add("grant_type", "client_credentials")
+	q.Add("scope", "openid")
+	q.Add("client_id", "2533bf54-3b55-48de-a65a-89dd2bc6399c")
+	q.Add("client_secret", "2533bf54-3b55-48de-a65a-89dd2bc6399c")
+
+	url := "https://identityapiqa.a.astrazeneca.com" + "/csdcidentity/oauth/tokn" + "?" + q.Encode()
+
+	req, _ := http.NewRequestWithContext(ctx, "POST", url, nil)
+	req.Header.Add("accept", "application/json")
+	req.Header.Add("content-type", "application/json")
+	req.Header.Add("X-App-Id", "SYSTEM")
+
+	httpStatus := c.doExternal(ctx, req)
+	status := &ServiceResponse{Status: httpStatus}
 
 	return status, nil
 }

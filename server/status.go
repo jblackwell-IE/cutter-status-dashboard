@@ -2,11 +2,12 @@ package server
 
 import (
 	"context"
-	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
 
 	"github.com/IdeaEvolver/cutter-pkg/clog"
+	"github.com/gocarina/gocsv"
 )
 
 type StatusRequest struct {
@@ -29,71 +30,97 @@ func (h *Handler) GetAllStatuses(w http.ResponseWriter, r *http.Request) (interf
 }
 
 func (h *Handler) AllChecks(ctx context.Context, bucket string) error {
-	statuses := []StatusLog{}
+	statuses := []*StatusLog{}
 	for {
 
-		platformStatus, err := h.Healthchecks.PlatformStatus(ctx)
+		// platformStatus, err := h.Healthchecks.PlatformStatus(ctx)
+		// if err != nil {
+		// 	clog.Fatalf("Error retrieving platform status", err)
+		// }
+
+		// statuses = append(statuses, &StatusLog{Service: "platform-api", Status: platformStatus.Status})
+
+		// if err := h.Statuses.UpdateStatus(ctx, "platform", platformStatus.Status); err != nil {
+		// 	clog.Fatalf("Error updating platform status", err)
+		// }
+
+		// fulfillmentStatus, err := h.Healthchecks.FulfillmentStatus(ctx)
+		// if err != nil {
+		// 	clog.Fatalf("Error retrieving fulfillment status", err)
+		// }
+
+		// statuses = append(statuses, &StatusLog{Service: "fulfillment-api", Status: fulfillmentStatus.Status})
+
+		// if err := h.Statuses.UpdateStatus(ctx, "fulfillment", fulfillmentStatus.Status); err != nil {
+		// 	clog.Fatalf("Error updating fulfillment status", err)
+		// }
+
+		// crmStatus, err := h.Healthchecks.CrmStatus(ctx)
+		// if err != nil {
+		// 	clog.Fatalf("Error retrieving crm status", err)
+		// }
+
+		// statuses = append(statuses, &StatusLog{Service: "crm-api", Status: crmStatus.Status})
+
+		// if err := h.Statuses.UpdateStatus(ctx, "crm", crmStatus.Status); err != nil {
+		// 	clog.Fatalf("Error updating crm status", err)
+		// }
+
+		// studyStatus, err := h.Healthchecks.StudyStatus(ctx)
+		// if err != nil {
+		// 	clog.Fatalf("Error retrieving study status", err)
+		// }
+
+		// statuses = append(statuses, &StatusLog{Service: "study-service-api", Status: studyStatus.Status})
+
+		// if err := h.Statuses.UpdateStatus(ctx, "study", studyStatus.Status); err != nil {
+		// 	clog.Fatalf("Error updating study status", err)
+		// }
+
+		// nodeMetrics, err := h.Metrics.GetNodeMetrics(ctx)
+		// if err != nil {
+		// 	clog.Fatalf("Error retrieving node metrics", err)
+		// }
+
+		// infra := "Ok"
+		// if !nodeMetrics.Healthy() {
+		// 	infra = "high utilization"
+		// }
+
+		hibbertStatus, err := h.Healthchecks.HibbertStatus(ctx)
 		if err != nil {
-			clog.Fatalf("Error retrieving platform status", err)
+			clog.Fatalf("Error retrieving hibbert status", err)
+		}
+		fmt.Println("Hibbert status %s", hibbertStatus.Status)
+		statuses = append(statuses, &StatusLog{Service: "hibbert-api", Status: hibbertStatus.Status})
+
+		if err := h.Statuses.UpdateStatus(ctx, "hibbert", hibbertStatus.Status); err != nil {
+			clog.Fatalf("Error updating hibbert status", err)
 		}
 
-		statuses = append(statuses, StatusLog{Service: "platform-api", Status: platformStatus.Status})
-
-		if err := h.Statuses.UpdateStatus(ctx, "platform", platformStatus.Status); err != nil {
-			clog.Fatalf("Error updating platform status", err)
-		}
-
-		fulfillmentStatus, err := h.Healthchecks.FulfillmentStatus(ctx)
+		azCrmStatus, err := h.Healthchecks.AZCRMStatus(ctx)
 		if err != nil {
-			clog.Fatalf("Error retrieving fulfillment status", err)
+			clog.Fatalf("Error retrieving az crm status", err)
+		}
+		fmt.Println("azcrm status %s", azCrmStatus.Status)
+		statuses = append(statuses, &StatusLog{Service: "azcrm-api", Status: azCrmStatus.Status})
+
+		if err := h.Statuses.UpdateStatus(ctx, "az_crm", azCrmStatus.Status); err != nil {
+			clog.Fatalf("Error updating az crm status", err)
 		}
 
-		statuses = append(statuses, StatusLog{Service: "fulfillment-api", Status: fulfillmentStatus.Status})
-
-		if err := h.Statuses.UpdateStatus(ctx, "fulfillment", fulfillmentStatus.Status); err != nil {
-			clog.Fatalf("Error updating fulfillment status", err)
-		}
-
-		crmStatus, err := h.Healthchecks.CrmStatus(ctx)
-		if err != nil {
-			clog.Fatalf("Error retrieving crm status", err)
-		}
-
-		statuses = append(statuses, StatusLog{Service: "crm-api", Status: crmStatus.Status})
-
-		if err := h.Statuses.UpdateStatus(ctx, "crm", crmStatus.Status); err != nil {
-			clog.Fatalf("Error updating crm status", err)
-		}
-
-		studyStatus, err := h.Healthchecks.StudyStatus(ctx)
-		if err != nil {
-			clog.Fatalf("Error retrieving study status", err)
-		}
-
-		statuses = append(statuses, StatusLog{Service: "study-service-api", Status: studyStatus.Status})
-
-		if err := h.Statuses.UpdateStatus(ctx, "study", studyStatus.Status); err != nil {
-			clog.Fatalf("Error updating study status", err)
-		}
-
-		nodeMetrics, err := h.Metrics.GetNodeMetrics(ctx)
-		if err != nil {
-			clog.Fatalf("Error retrieving node metrics", err)
-		}
-
-		infra := "Ok"
-		if !nodeMetrics.Healthy() {
-			infra = "high utilization"
-		}
-
-		statuses = append(statuses, StatusLog{Service: "infra", Status: infra})
-		if err := h.Statuses.UpdateStatus(ctx, "infrastructure", infra); err != nil {
-			clog.Fatalf("Error updating infra status", err)
-		}
-
-		filename := time.Now().String()
 		for _, status := range statuses {
-			if err := h.write(ctx, status, bucket, filename); err != nil {
+			fmt.Println("status", status)
+			filename := status.Service + "-logs/" + time.Now().String() + ".csv"
+
+			csvStatus := []*StatusLog{status}
+			csvContent, err := gocsv.MarshalString(&csvStatus)
+			if err != nil {
+				clog.Errorw("unable to marshal csv string %v", err)
+				return err
+			}
+
+			if err := h.write(ctx, csvContent, bucket, filename); err != nil {
 				clog.Errorf("unable to write data to bucket %s, object %s:  %v", bucket, filename, err)
 				return err
 			}
@@ -104,23 +131,18 @@ func (h *Handler) AllChecks(ctx context.Context, bucket string) error {
 
 }
 
-func (h *Handler) write(ctx context.Context, status StatusLog, bucket, object string) error {
+func (h *Handler) write(ctx context.Context, status string, bucket, object string) error {
 	ctx, cancel := context.WithTimeout(ctx, time.Second*50)
 	defer cancel()
 
 	wc := h.Storage.Bucket(bucket).Object(object).NewWriter(ctx)
-	wc.ContentType = "text/plain"
+	wc.ContentType = "text/csv"
 	wc.Metadata = map[string]string{
 		"x-goog-meta-foo": "foo",
 		"x-goog-meta-bar": "bar",
 	}
 
-	d, err := json.Marshal(status)
-	if err != nil {
-		return err
-	}
-
-	if _, err := wc.Write([]byte(d)); err != nil {
+	if _, err := wc.Write([]byte(status)); err != nil {
 		clog.Errorf("unable to write data to bucket %s, object %s:  %v", bucket, object, err)
 		return err
 	}

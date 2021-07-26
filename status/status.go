@@ -3,6 +3,7 @@ package status
 import (
 	"context"
 	"database/sql"
+	"fmt"
 
 	"github.com/IdeaEvolver/cutter-pkg/cuterr"
 )
@@ -28,9 +29,9 @@ func New(db *sql.DB) *StatusStore {
 }
 
 func (s *StatusStore) UpdateStatus(ctx context.Context, service, status string) error {
-	var query = `UPDATE statuses SET status = $2 WHERE service = $1`
+	var query = `UPDATE statuses SET status = $1 WHERE service = $2`
 
-	_, err := s.db.ExecContext(ctx, query, service, status)
+	_, err := s.db.ExecContext(ctx, query, status, service)
 	if err != nil {
 		return cuterr.FromDatabaseError("UpdateStatus", err)
 	}
@@ -59,6 +60,7 @@ func (s *StatusStore) GetAllStatuses(ctx context.Context) ([]*AllStatuses, error
 		}
 		ret = append(ret, r)
 	}
+	fmt.Println("RET   %v ", ret)
 	return ret, nil
 }
 

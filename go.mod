@@ -12,6 +12,7 @@ require (
 	github.com/IdeaEvolver/cutter-pkg/cuterr v1.4.0
 	github.com/IdeaEvolver/cutter-pkg/service v0.7.0
 	github.com/go-chi/chi v4.1.2+incompatible
+	github.com/gocarina/gocsv v0.0.0-20210516172204-ca9e8a8ddea8
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/rs/cors v1.7.0
 	go.opencensus.io v0.23.0
