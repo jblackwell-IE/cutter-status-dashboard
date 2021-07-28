@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/IdeaEvolver/cutter-pkg/clog"
@@ -15,8 +16,9 @@ type StatusRequest struct {
 }
 
 type StatusLog struct {
-	Service string `json:"service"`
-	Status  string `json:"status"`
+	Service   string    `json:"service"`
+	Status    string    `json:"status"`
+	Timestamp time.Time `json:"timestamp"`
 }
 
 func (h *Handler) GetStatus(w http.ResponseWriter, r *http.Request) (interface{}, error) {
@@ -77,21 +79,27 @@ func (h *Handler) AllChecks(ctx context.Context, bucket string) error {
 		// 	clog.Fatalf("Error updating study status", err)
 		// }
 
-		// nodeMetrics, err := h.Metrics.GetNodeMetrics(ctx)
-		// if err != nil {
-		// 	clog.Fatalf("Error retrieving node metrics", err)
-		// }
+		nodeMetrics, err := h.Metrics.GetNodeMetrics(ctx)
+		if err != nil {
+			clog.Fatalf("Error retrieving node metrics", err)
+		}
 
-		// infra := "Ok"
-		// if !nodeMetrics.Healthy() {
-		// 	infra = "high utilization"
-		// }
+		infra := "Ok"
+		if !nodeMetrics.Healthy() {
+			infra = "high utilization"
+		}
+
+		statuses = append(statuses, &StatusLog{Service: "infra", Status: infra})
+
+		if err := h.Statuses.UpdateStatus(ctx, "infrastructure", infra); err != nil {
+			clog.Fatalf("Error updating infra status", err)
+		}
 
 		hibbertStatus, err := h.Healthchecks.HibbertStatus(ctx)
 		if err != nil {
 			clog.Fatalf("Error retrieving hibbert status", err)
 		}
-		fmt.Println("Hibbert status %s", hibbertStatus.Status)
+
 		statuses = append(statuses, &StatusLog{Service: "hibbert-api", Status: hibbertStatus.Status})
 
 		if err := h.Statuses.UpdateStatus(ctx, "hibbert", hibbertStatus.Status); err != nil {
@@ -102,27 +110,43 @@ func (h *Handler) AllChecks(ctx context.Context, bucket string) error {
 		if err != nil {
 			clog.Fatalf("Error retrieving az crm status", err)
 		}
-		fmt.Println("azcrm status %s", azCrmStatus.Status)
+
 		statuses = append(statuses, &StatusLog{Service: "azcrm-api", Status: azCrmStatus.Status})
 
 		if err := h.Statuses.UpdateStatus(ctx, "az_crm", azCrmStatus.Status); err != nil {
 			clog.Fatalf("Error updating az crm status", err)
 		}
+		//TODO Ui statuses
+		statuses = append(statuses, &StatusLog{Service: "study-ui", Status: "200"})
+		statuses = append(statuses, &StatusLog{Service: "platform-ui", Status: "200"})
 
 		for _, status := range statuses {
-			fmt.Println("status", status)
-			filename := status.Service + "-logs/" + time.Now().String() + ".csv"
+			if !strings.Contains(status.Status, "200") && !strings.Contains(status.Status, "201") && !strings.Contains(status.Status, "Ok") {
+				filename := status.Service + "-logs.csv"
+				status.Timestamp = time.Now().UTC()
 
-			csvStatus := []*StatusLog{status}
-			csvContent, err := gocsv.MarshalString(&csvStatus)
-			if err != nil {
-				clog.Errorw("unable to marshal csv string %v", err)
-				return err
-			}
+				clog.Infow("status %s service %s ", status.Status, status.Service)
+				if err := h.Statuses.UpdateServiceDown(ctx, status.Service, status.Status, status.Timestamp); err != nil {
+					clog.Errorw("unable to insert new down status %v", err)
+					return err
+				}
 
-			if err := h.write(ctx, csvContent, bucket, filename); err != nil {
-				clog.Errorf("unable to write data to bucket %s, object %s:  %v", bucket, filename, err)
-				return err
+				statusReports, err := h.Statuses.GetServiceDown(ctx, status.Service)
+				if err != nil {
+					clog.Errorw("unable to return service report from table %v", err)
+					return err
+				}
+				fmt.Println("status Reports ", &statusReports[0])
+				csvContent, err := gocsv.MarshalString(&statusReports)
+				if err != nil {
+					clog.Errorw("unable to marshal csv string %v", err)
+					return err
+				}
+
+				if err := h.Write(ctx, csvContent, bucket, filename); err != nil {
+					clog.Errorf("unable to write data to bucket %s, object %s:  %v", bucket, filename, err)
+					return err
+				}
 			}
 		}
 
@@ -131,7 +155,7 @@ func (h *Handler) AllChecks(ctx context.Context, bucket string) error {
 
 }
 
-func (h *Handler) write(ctx context.Context, status string, bucket, object string) error {
+func (h *Handler) Write(ctx context.Context, status string, bucket, object string) error {
 	ctx, cancel := context.WithTimeout(ctx, time.Second*50)
 	defer cancel()
 

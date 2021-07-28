@@ -15,6 +15,19 @@ type ServiceResponse struct {
 	Status string `json:"status"`
 }
 
+type ExternalConfig struct {
+	HibbertEndpoint string
+	AppId           string
+	HibbertUsername string
+	HibbertPassword string
+	StripeEndpoint  string
+	StripeKey       string
+	ClientId        string
+	ClientSecret    string
+	AZCRMUrl        string
+	XAppId          string
+}
+
 type Client struct {
 	Client *client.Client
 
@@ -22,6 +35,8 @@ type Client struct {
 	Fulfillment string
 	Crm         string
 	Study       string
+
+	ExternalConfig ExternalConfig
 }
 
 type HttpClient interface {
@@ -127,20 +142,18 @@ type hibbertResponse struct {
 }
 
 func (c *Client) HibbertStatus(ctx context.Context) (*ServiceResponse, error) {
-	//url := c.HibbertEndpoint
-	url := "https://inventoryservices.qa.order2u.com/restServices/getUserToke"
+	url := c.ExternalConfig.HibbertEndpoint
 	body := struct {
 		AppId    string `json:"appId"`
 		Username string `json:"username"`
 		Password string `json:"password"`
 	}{
-		AppId:    "3142",
-		Username: "AZCutterAPI",
-		Password: "@admin@ZCutter@PI",
+		AppId:    c.ExternalConfig.AppId,
+		Username: c.ExternalConfig.HibbertUsername,
+		Password: c.ExternalConfig.HibbertPassword,
 	}
 
 	b, _ := json.Marshal(body)
-	//req, _ := client.NewRequestWithContext(ctx, "POST", url, bytes.NewReader(b))
 	req, _ := http.NewRequestWithContext(ctx, "POST", url, bytes.NewReader(b))
 	req.Header.Add("Content-Type", "application/json")
 	req.Header.Add("Accept", "application/json")
@@ -152,45 +165,34 @@ func (c *Client) HibbertStatus(ctx context.Context) (*ServiceResponse, error) {
 	return status, nil
 }
 
-// func (c *Client) StripeStatus(ctx context.Context) (*ServiceResponse, error) {
-// 	//url := c.HibbertEndpoint
-// 	url := "https://inventoryservices.qa.order2u.com/restServices/getUserToke"
-// 	body := struct {
-// 		AppId    string `json:"appId"`
-// 		Username string `json:"username"`
-// 		Password string `json:"password"`
-// 	}{
-// 		AppId:    "3142",
-// 		Username: "AZCutterAPI",
-// 		Password: "@admin@ZCutter@PI",
-// 	}
+func (c *Client) StripeStatus(ctx context.Context) (*ServiceResponse, error) {
+	url := c.ExternalConfig.StripeEndpoint
 
-// 	b, _ := json.Marshal(body)
-// 	//req, _ := client.NewRequestWithContext(ctx, "POST", url, bytes.NewReader(b))
-// 	req, _ := http.NewRequest("POST", url, bytes.NewReader(b))
-// 	req.Header.Add("Content-Type", "application/json")
-// 	req.Header.Add("Accept", "application/json")
+	req, _ := http.NewRequest("POST", url, nil)
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Accept", "application/json")
+	req.Header.Add("Authorization", "Bearer "+c.ExternalConfig.StripeKey)
 
-// 	httpStatus := c.doExternal(ctx, req)
+	httpStatus := c.doExternal(ctx, req)
 
-// 	status := &ServiceResponse{Status: httpStatus}
+	status := &ServiceResponse{Status: httpStatus}
 
-// 	return status, nil
-// }
+	return status, nil
+}
 
 func (c *Client) AZCRMStatus(ctx context.Context) (*ServiceResponse, error) {
 	q := url.Values{}
 	q.Add("grant_type", "client_credentials")
 	q.Add("scope", "openid")
-	q.Add("client_id", "2533bf54-3b55-48de-a65a-89dd2bc6399c")
-	q.Add("client_secret", "2533bf54-3b55-48de-a65a-89dd2bc6399c")
+	q.Add("client_id", c.ExternalConfig.ClientId)
+	q.Add("client_secret", c.ExternalConfig.ClientSecret)
 
-	url := "https://identityapiqa.a.astrazeneca.com" + "/csdcidentity/oauth/tokn" + "?" + q.Encode()
+	url := "https://identityapiqa.a.astrazeneca.com" + "/csdcidentity/oauth/token" + "?" + q.Encode()
 
 	req, _ := http.NewRequestWithContext(ctx, "POST", url, nil)
 	req.Header.Add("accept", "application/json")
 	req.Header.Add("content-type", "application/json")
-	req.Header.Add("X-App-Id", "SYSTEM")
+	req.Header.Add("X-App-Id", c.ExternalConfig.XAppId)
 
 	httpStatus := c.doExternal(ctx, req)
 	status := &ServiceResponse{Status: httpStatus}

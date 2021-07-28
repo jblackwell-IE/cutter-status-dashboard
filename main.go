@@ -17,6 +17,7 @@ import (
 	"github.com/IdeaEvolver/cutter-status-dashboard/metrics"
 	"github.com/IdeaEvolver/cutter-status-dashboard/server"
 	"github.com/IdeaEvolver/cutter-status-dashboard/status"
+	"github.com/gocarina/gocsv"
 	"github.com/kelseyhightower/envconfig"
 	"go.opencensus.io/plugin/ochttp"
 
@@ -39,6 +40,17 @@ type Config struct {
 	GoogleProject string `envconfig:"GOOGLE_PROJECT" required:"true"`
 	ClusterName   string `envconfig:"CLUSTER_NAME" required:"true"`
 	BucketName    string `envconfig:"BUCKET_NAME" required:"true"`
+
+	HibbertEndpoint string `envconfig:"HIBBERT_ENDPOINT" required:"true"`
+	AppId           string `envconfig:"APP_ID" required:"true"`
+	HibbertUsername string `envconfig:"HIBBERT_USERNAME" required:"true"`
+	HibbertPassword string `envconfig:"HIBBERT_PASSWORD" required:"true"`
+	StripeEndpoint  string `envconfig:"STRIPE_ENDPOINT" required:"true"`
+	StripeKey       string `envconfig:"STRIPE_KEY" required:"true"`
+	ClientId        string `envconfig:"CLIENT_ID" required:"true"`
+	ClientSecret    string `envconfig:"CLIENT_SECRET" required:"true"`
+	AZCRMUrl        string `envconfig:"AZ_CRM_URL" required:"true"`
+	XAppId          string `envconfig:"X_APP_ID" required:"true"`
 
 	PORT string `envconfig:"PORT"`
 }
@@ -99,6 +111,18 @@ func main() {
 		Fulfillment: cfg.FulfillmentHealthcheck,
 		Crm:         cfg.CrmHealthcheck,
 		Study:       cfg.StudyHealthcheck,
+		ExternalConfig: healthchecks.ExternalConfig{
+			HibbertEndpoint: cfg.HibbertEndpoint,
+			AppId:           cfg.AppId,
+			HibbertUsername: cfg.HibbertUsername,
+			HibbertPassword: cfg.HibbertPassword,
+			StripeEndpoint:  cfg.StripeEndpoint,
+			StripeKey:       cfg.StripeKey,
+			ClientId:        cfg.ClientId,
+			ClientSecret:    cfg.ClientSecret,
+			AZCRMUrl:        cfg.AZCRMUrl,
+			XAppId:          cfg.XAppId,
+		},
 	}
 
 	metricsClient, err := metrics.New(cfg.GoogleProject, cfg.ClusterName)
@@ -119,6 +143,27 @@ func main() {
 		Storage:      storageClient,
 	}
 	s := server.New(scfg, handler)
+
+	//init files in gcp
+	for _, service := range []string{"platform-api", "fulfillment-api", "crm-api",
+		"study-service-api", "infra", "hibbert-api", "azcrm-api", "study-ui", "platform-ui"} {
+
+		filename := service + "-logs.csv"
+
+		s := &server.StatusLog{Service: service, Status: "OK", Timestamp: time.Now().UTC()}
+
+		initStatuses := []*server.StatusLog{}
+		initStatuses = append(initStatuses, s)
+
+		csvContent, err := gocsv.MarshalString(&initStatuses)
+		if err != nil {
+			clog.Fatalf("unable to marshal csv string %v", err)
+		}
+		err = handler.Write(ctx, csvContent, cfg.BucketName, filename)
+		if err != nil {
+			clog.Fatalf("unable to write data to bucket %s, object %s:  %v ", cfg.BucketName, filename, err)
+		}
+	}
 
 	go handler.AllChecks(ctx, cfg.BucketName)
 

@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"net/http"
+	"time"
 
 	"cloud.google.com/go/storage"
 	"contrib.go.opencensus.io/exporter/stackdriver/propagation"
@@ -19,6 +20,8 @@ type StatusStore interface {
 	UpdateStatus(ctx context.Context, service, status string) error
 	GetAllStatuses(ctx context.Context) ([]*status.AllStatuses, error)
 	GetStatus(ctx context.Context, service string) (*status.Status, error)
+	UpdateServiceDown(ctx context.Context, service, status string, timestamp time.Time) error
+	GetServiceDown(ctx context.Context, service string) ([]*status.StatusReport, error)
 }
 
 type Handler struct {
