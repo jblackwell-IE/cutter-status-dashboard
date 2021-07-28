@@ -35,49 +35,49 @@ func (h *Handler) AllChecks(ctx context.Context, bucket string) error {
 	statuses := []*StatusLog{}
 	for {
 
-		// platformStatus, err := h.Healthchecks.PlatformStatus(ctx)
-		// if err != nil {
-		// 	clog.Fatalf("Error retrieving platform status", err)
-		// }
+		platformStatus, err := h.Healthchecks.PlatformStatus(ctx)
+		if err != nil {
+			clog.Fatalf("Error retrieving platform status", err)
+		}
 
-		// statuses = append(statuses, &StatusLog{Service: "platform-api", Status: platformStatus.Status})
+		statuses = append(statuses, &StatusLog{Service: "platform-api", Status: platformStatus.Status})
 
-		// if err := h.Statuses.UpdateStatus(ctx, "platform", platformStatus.Status); err != nil {
-		// 	clog.Fatalf("Error updating platform status", err)
-		// }
+		if err := h.Statuses.UpdateStatus(ctx, "platform", platformStatus.Status); err != nil {
+			clog.Fatalf("Error updating platform status", err)
+		}
 
-		// fulfillmentStatus, err := h.Healthchecks.FulfillmentStatus(ctx)
-		// if err != nil {
-		// 	clog.Fatalf("Error retrieving fulfillment status", err)
-		// }
+		fulfillmentStatus, err := h.Healthchecks.FulfillmentStatus(ctx)
+		if err != nil {
+			clog.Fatalf("Error retrieving fulfillment status", err)
+		}
 
-		// statuses = append(statuses, &StatusLog{Service: "fulfillment-api", Status: fulfillmentStatus.Status})
+		statuses = append(statuses, &StatusLog{Service: "fulfillment-api", Status: fulfillmentStatus.Status})
 
-		// if err := h.Statuses.UpdateStatus(ctx, "fulfillment", fulfillmentStatus.Status); err != nil {
-		// 	clog.Fatalf("Error updating fulfillment status", err)
-		// }
+		if err := h.Statuses.UpdateStatus(ctx, "fulfillment", fulfillmentStatus.Status); err != nil {
+			clog.Fatalf("Error updating fulfillment status", err)
+		}
 
-		// crmStatus, err := h.Healthchecks.CrmStatus(ctx)
-		// if err != nil {
-		// 	clog.Fatalf("Error retrieving crm status", err)
-		// }
+		crmStatus, err := h.Healthchecks.CrmStatus(ctx)
+		if err != nil {
+			clog.Fatalf("Error retrieving crm status", err)
+		}
 
-		// statuses = append(statuses, &StatusLog{Service: "crm-api", Status: crmStatus.Status})
+		statuses = append(statuses, &StatusLog{Service: "crm-api", Status: crmStatus.Status})
 
-		// if err := h.Statuses.UpdateStatus(ctx, "crm", crmStatus.Status); err != nil {
-		// 	clog.Fatalf("Error updating crm status", err)
-		// }
+		if err := h.Statuses.UpdateStatus(ctx, "crm", crmStatus.Status); err != nil {
+			clog.Fatalf("Error updating crm status", err)
+		}
 
-		// studyStatus, err := h.Healthchecks.StudyStatus(ctx)
-		// if err != nil {
-		// 	clog.Fatalf("Error retrieving study status", err)
-		// }
+		studyStatus, err := h.Healthchecks.StudyStatus(ctx)
+		if err != nil {
+			clog.Fatalf("Error retrieving study status", err)
+		}
 
-		// statuses = append(statuses, &StatusLog{Service: "study-service-api", Status: studyStatus.Status})
+		statuses = append(statuses, &StatusLog{Service: "study-service-api", Status: studyStatus.Status})
 
-		// if err := h.Statuses.UpdateStatus(ctx, "study", studyStatus.Status); err != nil {
-		// 	clog.Fatalf("Error updating study status", err)
-		// }
+		if err := h.Statuses.UpdateStatus(ctx, "study", studyStatus.Status); err != nil {
+			clog.Fatalf("Error updating study status", err)
+		}
 
 		nodeMetrics, err := h.Metrics.GetNodeMetrics(ctx)
 		if err != nil {
