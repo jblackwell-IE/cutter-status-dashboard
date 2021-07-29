@@ -125,14 +125,12 @@ spec:
           - name: CLIENT_SECRET
             valueFrom:
               secretKeyRef:
-                name: cutter-status-dashboard 
+                name: cutter-status-dashboard-secrets
                 key: CLIENT_SECRET
           - name: AZ_CRM_URL
             value: "https://identityapiqa.a.astrazeneca.com"
           - name: X_APP_ID
-            value: "SYSTEM"
-
-          
+            value: "SYSTEM" 
       - name: cloudsql-proxy
         image: gcr.io/cloudsql-docker/gce-proxy:1.14
         resources:
