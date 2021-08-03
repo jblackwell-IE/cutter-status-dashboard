@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"github.com/IdeaEvolver/cutter-pkg/client"
 )
@@ -62,7 +63,7 @@ func (c *Client) doExternal(ctx context.Context, req *http.Request) string {
 
 	resp, _ := internalClient.Do(req)
 
-	return resp.Status
+	return strings.TrimSpace(resp.Status)
 }
 
 func (c *Client) PlatformStatus(ctx context.Context) (*ServiceResponse, error) {
