@@ -70,12 +70,12 @@ spec:
             valueFrom:
               secretKeyRef:
                 name: cutter-status-dashboard-secrets
-                key: PASSWORD
+                key: DB_PASSWORD
           - name: DB_USERNAME
             valueFrom:
               secretKeyRef:
                 name: cutter-status-dashboard-secrets
-                key: USERNAME
+                key: DB_USERNAME
           - name: DB_NAME 
             value: dashboard_db
           - name: DB_PORT
@@ -94,6 +94,43 @@ spec:
             value: "https://cutter-dev-study-service-service"
           - name: CLUSTER_NAME
             value: "cutter-dev-gke-cluster"
+          - name: BUCKET_NAME
+            value: "dashboard-service-report"
+          - name: HIBBERT_ENDPOINT
+            value: "https://inventoryservices.qa.order2u.com/restServices/getUserToken"
+          - name: APP_ID
+            value: "3142"
+          - name: HIBBERT_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: cutter-status-dashboard-secrets
+                key: HIBBERT_USERNAME
+          - name: HIBBERT_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: cutter-status-dashboard-secrets
+                key: HIBBERT_PASSWORD
+          - name: STRIPE_ENDPOINT
+            value: "https://api.stripe.com/v1/charge"
+          - name: STRIPE_KEY
+            valueFrom:
+              secretKeyRef:
+                name: cutter-status-dashboard-secrets
+                key: STRIPE_KEY
+          - name: CLIENT_ID
+            valueFrom:
+              secretKeyRef:
+                name: cutter-status-dashboard-secrets
+                key: CLIENT_ID
+          - name: CLIENT_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: cutter-status-dashboard-secrets
+                key: CLIENT_SECRET
+          - name: AZ_CRM_URL
+            value: "https://identityapiqa.a.astrazeneca.com"
+          - name: X_APP_ID
+            value: "SYSTEM" 
       - name: cloudsql-proxy
         image: gcr.io/cloudsql-docker/gce-proxy:1.14
         resources:

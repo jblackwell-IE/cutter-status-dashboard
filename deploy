@@ -8,4 +8,15 @@ cd $(dirname $0)
 
 export TAG=$(git rev-list -1 HEAD .)
 
+cat <<SECRETS | kubectl create secret generic cutter-status-dashboard-secrets --from-env-file=/dev/stdin --dry-run -o=json | kubectl apply -f -
+DB_USERNAME=$DB_USERNAME
+DB_PASSWORD=$DB_PASSWORD
+HIBBERT_USERNAME=$HIBBERT_USERNAME
+HIBBERT_PASSWORD=$HIBBERT_PASSWORD
+STRIPE_KEY=$STRIPE_KEY
+CLIENT_ID=$CLIENT_ID
+CLIENT_SECRET=$CLIENT_SECRET
+SECRETS
+
+
 envsubst <./deploy.yaml | kubectl apply -f -

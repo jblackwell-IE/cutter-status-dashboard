@@ -38,6 +38,17 @@ services:
       GOOGLE_PROJECT: "cutter-214115"
       CLUSTER_NAME: "cutter-dev-gke-cluster"
       GOOGLE_APPLICATION_CREDENTIALS: /keys/cutter-214115-5bfe7b99a41d.json
+      BUCKET_NAME: "dashboard-service-report"
+      HIBBERT_ENDPOINT: "https://inventoryservices.qa.order2u.com/restServices/getUserToken"
+      APP_ID: "3142"
+      HIBBERT_USERNAME: ${HIBBERT_USERNAME}
+      HIBBERT_PASSWORD: ${HIBBERT_PASSWORD}
+      STRIPE_ENDPOINT: "https://api.stripe.com/v1/charge"
+      STRIPE_KEY: ${STRIPE_KEY}
+      CLIENT_ID: ${CLIENT_ID}
+      CLIENT_SECRET: ${CLIENT_SECRET}
+      AZ_CRM_URL: "https://identityapiqa.a.astrazeneca.com"
+      X_APP_ID: "SYSTEM"
   dashboard-psql:
     image: postgres
     ports:
