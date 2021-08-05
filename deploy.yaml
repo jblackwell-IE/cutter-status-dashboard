@@ -16,14 +16,14 @@ spec:
         app: cutter-status-dashboard
     spec:
       imagePullSecrets:
-        - name: cutter-dev-gcr-regcred
+        - name: cutter-prod-gcr-regcred
       volumes:
         - name: service-account
           secret:
-            secretName: "cutter-dev-idp-key"
-        - name: cutter-dev-sql-proxy-sa
+            secretName: "cutter-prod-idp-key"
+        - name: cutter-prod-sql-proxy-sa
           secret:
-            secretName: cutter-dev-sql-proxy-sa
+            secretName: cutter-prod-sql-proxy-sa
       terminationGracePeriodSeconds: 60  
       containers:
       - name: cutter-status-dashboard
@@ -61,7 +61,7 @@ spec:
           - name: GOOGLE_PROJECT
             value: $PROJECT_ID
           - name: GOOGLE_APPLICATION_CREDENTIALS
-            value: /keys/cutter-214115-5bfe7b99a41d.json
+            value: $GOOGLE_APPLICATION_CREDENTIALS
           - name: PORT
             value: "8080"
           - name: DB_HOSTNAME
@@ -69,15 +69,15 @@ spec:
           - name: DB_PASSWORD
             valueFrom:
               secretKeyRef:
-                name: cutter-status-dashboard-secrets
+                name: cutter-prod-status-dashboard-secrets
                 key: DB_PASSWORD
           - name: DB_USERNAME
             valueFrom:
               secretKeyRef:
-                name: cutter-status-dashboard-secrets
+                name: cutter-prod-status-dashboard-secrets
                 key: DB_USERNAME
           - name: DB_NAME 
-            value: dashboard_db
+            value: cutter-prod-status-dashboard
           - name: DB_PORT
             value: "5432"
           - name: MIGRATE_LEVEL 
@@ -85,17 +85,17 @@ spec:
           - name: MIGRATIONS_FOLDER
             value: /app/migrations
           - name: PLATFORM_ENDPOINT
-            value: "https://cutter-dev-platform-api-service"
+            value: "https://cutter-prod-platform-api-service"
           - name: FULFILLMENT_ENDPOINT
-            value: "https://cutter-dev-fulfillment-service-service"
+            value: "https://cutter-prod-fulfillment-service-service"
           - name: CRM_ENDPOINT
-            value: "https://cutter-dev-crm-service-service"
+            value: "https://cutter-prod-crm-service-service"
           - name: STUDY_ENDPOINT
-            value: "https://cutter-dev-study-service-service"
+            value: "https://cutter-prod-study-service-service"
           - name: CLUSTER_NAME
-            value: "cutter-dev-gke-cluster"
+            value: "cutter-prod-gke-cluster"
           - name: BUCKET_NAME
-            value: "dashboard-service-report"
+            value: "dashboard-prod-service-report"
           - name: HIBBERT_ENDPOINT
             value: "https://inventoryservices.qa.order2u.com/restServices/getUserToken"
           - name: APP_ID
@@ -103,29 +103,29 @@ spec:
           - name: HIBBERT_USERNAME
             valueFrom:
               secretKeyRef:
-                name: cutter-status-dashboard-secrets
+                name: cutter-prod-status-dashboard-secrets
                 key: HIBBERT_USERNAME
           - name: HIBBERT_PASSWORD
             valueFrom:
               secretKeyRef:
-                name: cutter-status-dashboard-secrets
+                name: cutter-prod-status-dashboard-secrets
                 key: HIBBERT_PASSWORD
           - name: STRIPE_ENDPOINT
             value: "https://api.stripe.com/v1/charge"
           - name: STRIPE_KEY
             valueFrom:
               secretKeyRef:
-                name: cutter-status-dashboard-secrets
+                name: cutter-prod-status-dashboard-secrets
                 key: STRIPE_KEY
           - name: CLIENT_ID
             valueFrom:
               secretKeyRef:
-                name: cutter-status-dashboard-secrets
+                name: cutter-prod-status-dashboard-secrets
                 key: CLIENT_ID
           - name: CLIENT_SECRET
             valueFrom:
               secretKeyRef:
-                name: cutter-status-dashboard-secrets
+                name: cutter-prod-status-dashboard-secrets
                 key: CLIENT_SECRET
           - name: AZ_CRM_URL
             value: "https://identityapiqa.a.astrazeneca.com"
@@ -140,17 +140,17 @@ spec:
           - name: DB_HOSTNAME
             value: localhost
           - name: ENV
-            value: dev
+            value: prod
         command:
           - /cloud_sql_proxy
-          - -instances=cutter-214115:us-central1:cutter-status-dashboard-dev=tcp:5432
+          - -instances=cutter-prod:us-central1:cutter-prod-dashboard=tcp:5432
           - -credential_file=/secrets/cloudsql/credentials.json
           - ./cloudbuild/migrations
         securityContext:
           runAsUser: 2 # non-root user
           allowPrivilegeEscalation: false
         volumeMounts:
-          - name: cutter-dev-sql-proxy-sa
+          - name: cutter-prod-sql-proxy-sa
             mountPath: /secrets/cloudsql
             readOnly: true
 --- 
