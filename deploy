@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export PROJECT_ID=cutter-214115
+export PROJECT_ID=cutter-prod
 
 cd $(dirname $0)
 
@@ -8,7 +8,7 @@ cd $(dirname $0)
 
 export TAG=$(git rev-list -1 HEAD .)
 
-cat <<SECRETS | kubectl create secret generic cutter-status-dashboard-secrets --from-env-file=/dev/stdin --dry-run -o=json | kubectl apply -f -
+cat <<SECRETS | kubectl create secret generic cutter-prod-status-dashboard-secrets --from-env-file=/dev/stdin --dry-run -o=json | kubectl apply -f -
 DB_USERNAME=$DB_USERNAME
 DB_PASSWORD=$DB_PASSWORD
 HIBBERT_USERNAME=$HIBBERT_USERNAME

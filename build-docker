@@ -3,7 +3,7 @@
 cd $(dirname $0)
 
 TAG=$(git rev-list -1 HEAD .)
-export PROJECT_ID=cutter-214115
+export PROJECT_ID=cutter-prod
 
 IMAGE=gcr.io/$PROJECT_ID/cutter-status-dashboard:$TAG
 docker build -t $IMAGE .

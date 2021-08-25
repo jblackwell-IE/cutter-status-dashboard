@@ -1,0 +1,22 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: cutter-prod-dashboard-ingress
+  namespace: default
+  annotations: 
+    kubernetes.io/ingress.global-static-ip-name: cutter-prod-dashboard-lb-ip
+    networking.gke.io/managed-certificates: cutter-prod-dashboard-cert
+    kubernetes.io/ingress.allow-http: "false"
+spec:
+  rules:
+    - host: dashboard.aus.cutter.click
+      http:
+        paths:
+        - backend:
+            serviceName: cutter-status-dashboard
+            servicePort: 8080
+          path: /api/*
+        - backend:
+            serviceName: cutter-status-dashboard
+            servicePort: 8080
+          path: /*
