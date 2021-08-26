@@ -1,14 +1,12 @@
 #!/bin/bash
 
-export PROJECT_ID=cutter-214115
-
 cd $(dirname $0)
 
 #apk add --no-cache gettext
 
 export TAG=$(git rev-list -1 HEAD .)
 
-cat <<SECRETS | kubectl create secret generic cutter-status-dashboard-secrets --from-env-file=/dev/stdin --dry-run -o=json | kubectl apply -f -
+cat <<SECRETS | kubectl create secret generic cutter-$ENV-status-dashboard-secrets --from-env-file=/dev/stdin --dry-run -o=json | kubectl apply -f -
 DB_USERNAME=$DB_USERNAME
 DB_PASSWORD=$DB_PASSWORD
 HIBBERT_USERNAME=$HIBBERT_USERNAME
